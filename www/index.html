@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat Room</title>
+
+    <meta charset="utf-8" />
+
+    <script src="Scripts/jquery.min.js"></script>
+    <script src="Scripts/socket.io.min.js"></script>
+    <style type="text/css">
+        body {
+            background-image: url('valley.jpeg');
+            margin: 0;
+            background-color: lightgray;
+            font-family: sans-serif;
+            text-align: center;
+            font-size: 20pt;
+            background-repeat: no-repeat;
+            background-size: cover;
+            height: 100vh;
+            width: 100vw;
+            margin: 0px;
+        }
+
+        #wrap {
+            width: 100vw;
+            height: 95vh;
+            background: linear-gradient(75deg, rgb(40,43,54) 0%, rgb(40,43,54) 50%, rgba(40,43,54,0.8) 100%);
+            /* Vertical center */
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        #foot {
+            background: linear-gradient(75deg, rgb(40,43,54) 0%, rgb(40,43,54) 50%, rgba(40,43,54,0.8) 100%);
+            color: azure;
+        }
+
+        img {
+            width: 400px;
+            height: 250px;
+        }
+
+        h1 {
+            font-family: Candera;
+            font-size: 30pt;
+            text-align: center;
+        }
+
+        #txtName {
+            border-radius: 10px;
+            margin-left: 40px;
+            margin-top: 50px;
+            height: 40px;
+            font-size: 15pt;
+            text-align: center;
+            background-color: lightblue;
+        }
+
+        #btnSend {
+            margin-left: 10px;
+            margin-top: 50px;
+            border-radius: 10px;
+            height: 50px;
+            font-size: 15pt;
+            text-align: center;
+            background-color: green;
+        }
+
+        @media screen and (max-width:300px) {
+            #txtName {
+                display: block;
+                float: none;
+            }
+
+            #btnSend {
+                width: 100%;
+            }
+
+            #msg {
+                color: white;
+            }
+    </style>
+    <script>
+        var socket;
+
+        $(function () {
+            socket = io.connect('http://localhost:4444');
+            $('#btnSend').click(userInformation);
+            $('#btnChat').click(chatMessages);
+            $('#txtName').keypress(processEnterPress);
+            $('#txtName').focus();
+
+            socket.on('greetings', function (greet) {
+                $('#msg').html(greet);
+                setTimeout(function () {
+                    $('#msg').fadeOut(3000);
+                }, 5000);
+
+            })
+            socket.on('updateChat', function (user, messages) {
+                $('#chat').append('<b>' + user + ': </b>' + messages + '<br/>');
+            })
+            //upload Picture
+            socket.on('addimage', function (user, myImage, myFile) {
+                $('#images').append('<br/><b>' + user + ': </b>' + '<a target="_blank" href="' + myImage + '"><img width="200" height="200" style="border-radius:10px" src="' + myImage + '" /></a>');
+            })
+            $(function () {
+                $('#btnImageFile').on('change', function (e) {
+                    var file = e.originalEvent.target.files[0];
+                    var reader = new FileReader();
+                    reader.onload = function (evt) {
+                        socket.emit('userImage', evt.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                })
+            })
+        })
+        function userInformation() {
+            var user = $('#txtName').val();
+            if (user == '') {
+                alert('Name cannot be left blank');
+                $('#txtName').focus();
+                return;
+            }
+            socket.emit('user', user);
+            $('#txtName').val('');
+            $('#btnChat').show();
+            $('#btnImageFile').show();
+            $('#btnSend').hide();
+            $("#txtName").attr("placeholder", "Write your message here.");
+            $('#txtName').focus();
+        }
+        function chatMessages() {
+            socket.emit('chatSMS', $('#txtName').val());
+            $('#txtName').val('');
+            $('#txtName').focus();
+        }
+        function processEnterPress(e) {
+            if (e.which == 13) {
+                e.preventDefault();
+                $(this).blur();
+                var confrm = $("#txtName").attr("placeholder");
+                if (confrm == 'Enter your name') {
+                    $('#btnSend').focus().click();
+                }
+                else {
+                    $('#btnChat').focus().click();
+                }
+
+            }
+        }
+    </script>
+</head>
+
+<body>
+
+    <div class='container' id='wrap'>
+        <h1><b>Welcome To Chat Service 👋 </b> </h1>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <label></label>
+                <div id='msg'></div>
+            </div>
+            <div class="form-group">
+                <label></label>
+                <div id='chat'></div>
+                <div id='images'></div>
+            </div>
+            <div class="form-group">
+                <label></label>
+                <div>
+                    <input class="form-control" id="txtName" placeholder="Enter your name please">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div>
+                    <button type="button" id="btnSend" class="btn btn-primary">Join Chat</button>
+                    <button type="button" id="btnChat" style="display:none" class="btn btn-primary">Send</button>
+
+                    <label class="btn btn-default btn-file" id="btnImageFile" style="display:none">
+                        Add Files <input type="file" style="display: none;">
+                        <p id="info">Server is running........!!!</p>
+                </div>
+            </div>
+            </label>
+
+
+    </div>
+    </div>
+    <footer id='foot'>
+        &nbsp; &copy Manjurul | www.isdb-bisew.com.bd
+    </footer>
+    </form>
+
+
+
+</body>
+
+</html>
